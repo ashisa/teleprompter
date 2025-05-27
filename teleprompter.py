@@ -186,8 +186,12 @@ Happy presenting!"""
             command=self.update_scroll_speed
         )
         self.speed_scale.grid(row=1, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
-        self.speed_label = ttk.Label(controls_frame, text=f"{self.scroll_speed:.1f}x")
-        self.speed_label.grid(row=1, column=2, padx=(0, 20), pady=(10, 0))
+        # Editable speed entry
+        self.speed_var = tk.StringVar(value=f"{self.scroll_speed:.1f}")
+        self.speed_entry = ttk.Entry(controls_frame, textvariable=self.speed_var, width=5)
+        self.speed_entry.grid(row=1, column=2, padx=(0, 20), pady=(10, 0))
+        self.speed_entry.bind('<Return>', self.set_speed_from_entry)
+        self.speed_entry.bind('<FocusOut>', self.set_speed_from_entry)
         
         # Close button frame at the bottom
         close_frame = ttk.Frame(main_frame)
@@ -296,9 +300,23 @@ Happy presenting!"""
         self.text_display.config(font=display_font)
     
     def update_scroll_speed(self, value):
-        """Update scroll speed multiplier"""
+        """Update scroll speed multiplier from scale or entry"""
         self.scroll_speed = float(value)
-        self.speed_label.config(text=f"{self.scroll_speed:.1f}x")
+        self.speed_var.set(f"{self.scroll_speed:.1f}")
+    
+    def set_speed_from_entry(self, event=None):
+        """Set scroll speed from the editable entry box."""
+        try:
+            value = float(self.speed_var.get())
+            if value < 0.1:
+                value = 0.1
+            elif value > 5.0:
+                value = 5.0
+            self.scroll_speed = value
+            self.speed_scale.set(value)
+        except ValueError:
+            # Reset to current scroll speed if invalid input
+            self.speed_var.set(f"{self.scroll_speed:.1f}")
     
     def on_closing(self):
         """Handle application closing and cleanup"""
