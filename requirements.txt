@@ -1,0 +1,10 @@
+# No external dependencies required - uses built-in tkinter
+# This teleprompter application uses only Python standard library modules:
+# - tkinter (GUI framework)
+# - threading (for auto-scrolling)
+# - time (for scroll timing)
+
+# If you need to install tkinter on Linux systems:
+# sudo apt-get install python3-tk
+
+# For Windows and macOS, tkinter comes pre-installed with Python
