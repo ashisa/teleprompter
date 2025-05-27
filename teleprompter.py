@@ -10,6 +10,13 @@ class TeleprompterApp:
         self.root.geometry("350x400")
         
         self.root.overrideredirect(True)
+        self.root.attributes('-topmost', True)  # Make window always on top
+
+        # Enable window dragging
+        self.offset_x = 0
+        self.offset_y = 0
+        self.root.bind('<Button-1>', self.start_move)
+        self.root.bind('<B1-Motion>', self.do_move)
 
         # Center the window at the top of the screen
         self.center_window_top()
@@ -317,6 +324,17 @@ Happy presenting!"""
         if self.scroll_thread and self.scroll_thread.is_alive():
             self.scroll_thread.join(timeout=1.0)
         self.root.destroy()
+
+    def start_move(self, event):
+        """Record the offset of the mouse pointer from the window's top-left corner."""
+        self.offset_x = event.x_root - self.root.winfo_x()
+        self.offset_y = event.y_root - self.root.winfo_y()
+
+    def do_move(self, event):
+        """Move the window to the new position."""
+        new_x = event.x_root - self.offset_x
+        new_y = event.y_root - self.offset_y
+        self.root.geometry(f'+{new_x}+{new_y}')
 
 def main():
     root = tk.Tk()
