@@ -176,20 +176,23 @@ Happy presenting!"""
         self.font_label.grid(row=0, column=2, padx=(0, 20))
         
         # Scroll speed controls
+        # Label for scroll speed
         ttk.Label(controls_frame, text="Scroll Speed:").grid(row=1, column=0, sticky=tk.W, padx=(0, 5), pady=(10, 0))
+        # Scale widget for adjusting scroll speed (0.1x to 5.0x)
         self.speed_scale = ttk.Scale(
             controls_frame,
             from_=0.1,
             to=5.0,
             orient=tk.HORIZONTAL,
             value=self.scroll_speed,
-            command=self.update_scroll_speed
+            command=self.update_scroll_speed  # Updates speed when slider is moved
         )
         self.speed_scale.grid(row=1, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
-        # Editable speed entry
-        self.speed_var = tk.StringVar(value=f"{self.scroll_speed:.1f}")
+        # Entry widget for direct input of scroll speed (editable)
+        self.speed_var = tk.StringVar(value=f"{self.scroll_speed:.1f}")  # Holds the speed value as string
         self.speed_entry = ttk.Entry(controls_frame, textvariable=self.speed_var, width=5)
         self.speed_entry.grid(row=1, column=2, padx=(0, 20), pady=(10, 0))
+        # Bind Enter key and focus-out event to update speed from entry
         self.speed_entry.bind('<Return>', self.set_speed_from_entry)
         self.speed_entry.bind('<FocusOut>', self.set_speed_from_entry)
         
@@ -300,12 +303,21 @@ Happy presenting!"""
         self.text_display.config(font=display_font)
     
     def update_scroll_speed(self, value):
-        """Update scroll speed multiplier from scale or entry"""
+        """
+        Update scroll speed multiplier from scale or entry.
+        This method is called when the slider is moved. It updates the scroll_speed variable
+        and also updates the entry box to reflect the new value.
+        """
         self.scroll_speed = float(value)
-        self.speed_var.set(f"{self.scroll_speed:.1f}")
+        self.speed_var.set(f"{self.scroll_speed:.1f}")  # Keep entry in sync with slider
     
     def set_speed_from_entry(self, event=None):
-        """Set scroll speed from the editable entry box."""
+        """
+        Set scroll speed from the editable entry box.
+        This method is called when the user presses Enter or leaves the entry box.
+        It validates the input, clamps it to the allowed range, and updates the slider and scroll_speed.
+        If the input is invalid, it resets the entry to the current scroll speed.
+        """
         try:
             value = float(self.speed_var.get())
             if value < 0.1:
@@ -313,7 +325,7 @@ Happy presenting!"""
             elif value > 5.0:
                 value = 5.0
             self.scroll_speed = value
-            self.speed_scale.set(value)
+            self.speed_scale.set(value)  # Update the slider to match entry
         except ValueError:
             # Reset to current scroll speed if invalid input
             self.speed_var.set(f"{self.scroll_speed:.1f}")
