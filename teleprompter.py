@@ -5,36 +5,39 @@ import time
 
 class TeleprompterApp:
     def __init__(self, root):
+        # Store the root Tkinter window
         self.root = root
-        self.root.title("Teleprompter")
-        self.root.geometry("350x400")
+        self.root.title("Teleprompter")  # Set window title
+        self.root.geometry("350x400")    # Set initial window size
         
+        # Remove window decorations (border, title bar) for a clean look
         self.root.overrideredirect(True)
-        self.root.attributes('-topmost', True)  # Make window always on top
+        # Keep the window always on top of other windows
+        self.root.attributes('-topmost', True)
 
-        # Enable window dragging
+        # Enable window dragging by tracking mouse events
         self.offset_x = 0
         self.offset_y = 0
-        self.root.bind('<Button-1>', self.start_move)
-        self.root.bind('<B1-Motion>', self.do_move)
+        self.root.bind('<Button-1>', self.start_move)      # Start drag
+        self.root.bind('<B1-Motion>', self.do_move)        # Dragging motion
 
         # Center the window at the top of the screen
         self.center_window_top()
         
-        # Initialize variables
-        self.is_edit_mode = True
-        self.is_scrolling = False
-        self.scroll_speed = 1.0
-        self.font_size = 20
-        self.scroll_thread = None
+        # Initialize state variables
+        self.is_edit_mode = True         # True: edit mode, False: display mode
+        self.is_scrolling = False        # True if auto-scrolling is active
+        self.scroll_speed = 1.0          # Scrolling speed multiplier
+        self.font_size = 20              # Default font size
+        self.scroll_thread = None        # Thread for auto-scrolling
         
-        # Set dark theme for the entire window
+        # Apply dark theme to the window and widgets
         self.setup_dark_theme()
         
-        # Create the GUI
+        # Build all GUI widgets
         self.create_widgets()
         
-        # Bind close event
+        # Bind the window close event to custom handler
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
     
     def setup_dark_theme(self):
@@ -44,11 +47,9 @@ class TeleprompterApp:
         
         # Configure ttk styles for dark theme
         style = ttk.Style()
-        
-        # Configure dark theme colors
         style.theme_use('clam')  # Use clam theme as base
         
-        # Configure styles for different widgets
+        # Set background and foreground colors for various widgets
         style.configure('TFrame', background='#2b2b2b')
         style.configure('TLabel', background='#2b2b2b', foreground='#ffffff')
         style.configure('TButton', 
@@ -68,32 +69,32 @@ class TeleprompterApp:
 
     def center_window_top(self):
         """Position window at center-top of screen"""
-        self.root.update_idletasks()
+        self.root.update_idletasks()  # Ensure geometry info is updated
         screen_width = self.root.winfo_screenwidth()
         window_width = 350
-        x = (screen_width - window_width) // 2
-        y = 0  # Position at absolute top of screen
+        x = (screen_width - window_width) // 2  # Center horizontally
+        y = 0  # Position at absolute top
         self.root.geometry(f"{window_width}x400+{x}+{y}")
     
     def create_widgets(self):
         """Create and setup all GUI widgets"""
-        # Main container
+        # Main container frame with padding
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        # Configure grid weights - text area gets most space
+        # Configure grid weights so text area expands with window
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(0, weight=1)
-        main_frame.rowconfigure(0, weight=1)  # Text area row gets weight
+        main_frame.rowconfigure(0, weight=1)
         
-        # Text area frame - now at the top (row 0)
+        # Text area frame at the top
         text_frame = ttk.Frame(main_frame)
         text_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 10))
         text_frame.columnconfigure(0, weight=1)
         text_frame.rowconfigure(0, weight=1)
         
-        # Text widget (edit mode)
+        # Text widget for editing (edit mode)
         self.text_edit = scrolledtext.ScrolledText(
             text_frame,
             wrap=tk.WORD,
@@ -102,7 +103,7 @@ class TeleprompterApp:
         )
         self.text_edit.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        # Text widget (display mode) - initially hidden
+        # Text widget for display mode (read-only, styled)
         self.text_display = tk.Text(
             text_frame,
             wrap=tk.WORD,
@@ -113,7 +114,7 @@ class TeleprompterApp:
             cursor="none"
         )
         
-        # Sample text
+        # Insert sample text for demonstration
         sample_text = """Welcome to the Teleprompter!
 
 This is your teleprompter application. You can:
@@ -130,14 +131,13 @@ In Display mode, the text will be displayed with white text on a black backgroun
 Use the controls at the bottom to customize your experience. The font size can be adjusted from 8 to 72 points, and scroll speed can be set from very slow to very fast.
 
 Happy presenting!"""
-        
         self.text_edit.insert(tk.END, sample_text)
         
-        # Mode toggle frame - now in the middle (row 1)
+        # Frame for mode toggle and scroll button
         mode_frame = ttk.Frame(main_frame)
         mode_frame.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
-        # Edit/Display mode toggle
+        # Button to toggle between Edit and Display modes
         self.mode_var = tk.StringVar(value="Edit")
         self.mode_button = ttk.Button(
             mode_frame, 
@@ -147,7 +147,7 @@ Happy presenting!"""
         )
         self.mode_button.pack(side=tk.LEFT)
         
-        # Start/Stop scrolling button (only visible in display mode)
+        # Button to start/stop scrolling (only visible in display mode)
         self.scroll_button = ttk.Button(
             mode_frame,
             text="Start Scrolling",
@@ -155,7 +155,7 @@ Happy presenting!"""
             width=15
         )
         
-        # Controls frame - now at the bottom (row 2)
+        # Controls frame for font size and scroll speed
         controls_frame = ttk.Frame(main_frame)
         controls_frame.grid(row=2, column=0, sticky=(tk.W, tk.E))
         controls_frame.columnconfigure(1, weight=1)
@@ -163,7 +163,6 @@ Happy presenting!"""
         
         # Font size controls
         ttk.Label(controls_frame, text="Font Size:").grid(row=0, column=0, sticky=tk.W, padx=(0, 5))
-        
         self.font_scale = ttk.Scale(
             controls_frame,
             from_=8,
@@ -173,13 +172,11 @@ Happy presenting!"""
             command=self.update_font_size
         )
         self.font_scale.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(0, 10))
-        
         self.font_label = ttk.Label(controls_frame, text=str(self.font_size))
         self.font_label.grid(row=0, column=2, padx=(0, 20))
         
         # Scroll speed controls
         ttk.Label(controls_frame, text="Scroll Speed:").grid(row=1, column=0, sticky=tk.W, padx=(0, 5), pady=(10, 0))
-        
         self.speed_scale = ttk.Scale(
             controls_frame,
             from_=0.1,
@@ -192,11 +189,11 @@ Happy presenting!"""
         self.speed_label = ttk.Label(controls_frame, text=f"{self.scroll_speed:.1f}x")
         self.speed_label.grid(row=1, column=2, padx=(0, 20), pady=(10, 0))
         
-        # Close button frame - at the very bottom (row 3)
+        # Close button frame at the bottom
         close_frame = ttk.Frame(main_frame)
         close_frame.grid(row=3, column=0, sticky=(tk.W, tk.E), pady=(10, 0))
         
-        # Close button
+        # Button to close the application
         self.close_button = ttk.Button(
             close_frame,
             text="Close",
@@ -212,12 +209,12 @@ Happy presenting!"""
             self.is_edit_mode = False
             self.mode_button.config(text="Edit Mode")
             
-            # Always copy text from edit to display when switching to display mode
+            # Copy text from edit widget to display widget
             content = self.text_edit.get(1.0, tk.END)
-            self.text_display.config(state=tk.NORMAL)  # Enable temporarily to update content
+            self.text_display.config(state=tk.NORMAL)  # Enable to update content
             self.text_display.delete(1.0, tk.END)
             self.text_display.insert(1.0, content)
-            self.text_display.config(state=tk.DISABLED)  # Disable again
+            self.text_display.config(state=tk.DISABLED)  # Make read-only
             
             # Hide edit widget, show display widget
             self.text_edit.grid_remove()
@@ -231,13 +228,11 @@ Happy presenting!"""
             self.is_edit_mode = True
             self.mode_button.config(text="Display Mode")
             
-            # Stop scrolling if active
+            # Stop scrolling if it is active
             if self.is_scrolling:
                 self.toggle_scrolling()
             
-            # Don't copy text back from display to edit - keep edit content intact
-            # This prevents overwriting user edits with old display content
-            
+            # Do not copy text back from display to edit
             # Hide display widget, show edit widget
             self.text_display.grid_remove()
             self.text_edit.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -256,87 +251,75 @@ Happy presenting!"""
             self.scroll_button.config(text="Start Scrolling")
     
     def start_scrolling(self):
-        """Start the scrolling thread"""
+        """Start the scrolling thread if not already running"""
         if self.scroll_thread and self.scroll_thread.is_alive():
             return
-        
         self.scroll_thread = threading.Thread(target=self.scroll_text, daemon=True)
         self.scroll_thread.start()
     
     def scroll_text(self):
-        """Auto-scroll the text in display mode"""
+        """Auto-scroll the text in display mode using a thread"""
         while self.is_scrolling and not self.is_edit_mode:
             try:
-                # Enable text widget temporarily to scroll
+                # Temporarily enable text widget to scroll
                 self.text_display.config(state=tk.NORMAL)
-                
-                # Get current position
+                # Get current vertical position
                 current_pos = self.text_display.yview()[0]
-                
-                # Fixed scroll increment - always use a base increment that works
-                # The speed control affects timing, not increment size
-                base_increment = 0.002  # Larger base increment for visibility
+                # Scroll by a small increment
+                base_increment = 0.002
                 self.text_display.yview_moveto(current_pos + base_increment)
-                
-                # Check if we've reached the end
+                # If reached the end, stop scrolling
                 if self.text_display.yview()[1] >= 1.0:
                     self.is_scrolling = False
                     self.root.after(0, lambda: self.scroll_button.config(text="Start Scrolling"))
-                
                 # Disable editing again
                 self.text_display.config(state=tk.DISABLED)
-                
-                # Fixed sleep calculation - inverse relationship with speed
-                # Speed 0.1 = very slow (sleep 0.5s), Speed 1.0 = normal (sleep 0.05s), Speed 5.0 = fast (sleep 0.01s)
+                # Calculate sleep time based on speed
                 base_sleep = 0.05
                 if self.scroll_speed >= 1.0:
                     sleep_time = base_sleep / self.scroll_speed
                 else:
-                    # For speeds < 1.0, increase sleep time proportionally
                     sleep_time = base_sleep * (1.0 / self.scroll_speed)
-                
                 time.sleep(sleep_time)
-                
             except tk.TclError:
-                # Widget was destroyed
+                # Widget was destroyed, exit thread
                 break
     
     def update_font_size(self, value):
         """Update font size for both text widgets"""
         self.font_size = int(float(value))
         self.font_label.config(text=str(self.font_size))
-        
-        # Update fonts
+        # Update font for edit and display widgets
         edit_font = ("Arial", self.font_size)
         display_font = ("Arial", self.font_size, "bold")
-        
         self.text_edit.config(font=edit_font)
         self.text_display.config(font=display_font)
     
     def update_scroll_speed(self, value):
-        """Update scroll speed"""
+        """Update scroll speed multiplier"""
         self.scroll_speed = float(value)
         self.speed_label.config(text=f"{self.scroll_speed:.1f}x")
     
     def on_closing(self):
-        """Handle application closing"""
+        """Handle application closing and cleanup"""
         self.is_scrolling = False
         if self.scroll_thread and self.scroll_thread.is_alive():
             self.scroll_thread.join(timeout=1.0)
         self.root.destroy()
 
     def start_move(self, event):
-        """Record the offset of the mouse pointer from the window's top-left corner."""
+        """Record the offset of the mouse pointer from the window's top-left corner for dragging."""
         self.offset_x = event.x_root - self.root.winfo_x()
         self.offset_y = event.y_root - self.root.winfo_y()
 
     def do_move(self, event):
-        """Move the window to the new position."""
+        """Move the window to the new position based on mouse drag."""
         new_x = event.x_root - self.offset_x
         new_y = event.y_root - self.offset_y
         self.root.geometry(f'+{new_x}+{new_y}')
 
 def main():
+    # Create the main Tkinter window and start the Teleprompter app
     root = tk.Tk()
     app = TeleprompterApp(root)
     root.mainloop()
